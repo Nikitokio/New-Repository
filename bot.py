@@ -7,7 +7,7 @@ from glob import glob
 
 from emoji import emojize
 
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, KeyboardButton
 
 def get_smile(user_data):
     if 'emoji' not in user_data:
@@ -20,7 +20,7 @@ def greet_user(update, context):
     context.user_data['emoji'] = get_smile(context.user_data)
     update.message.reply_text(
         f"Здравствуй пользователь {context.user_data['emoji']}!",
-        reply_markup=main_keyboard
+        reply_markup=main_keyboard()
         )
 
 def talk_to_me(update, context):
@@ -55,7 +55,17 @@ def send_ref(update, context):
     context.bot.send_document(chat_id=chat_id, document=open('ref/refMRI.pdf', 'rb'))
 
 def main_keyboard():
-    return ReplyKeyboardMarkup([['Прислать направление на МРТ']])
+    return ReplyKeyboardMarkup([['Прислать направление на МРТ'],
+    [KeyboardButton('Мои координаты', request_location=True)]
+    ])
+
+def user_coordinates(update,context):
+    context.user_data['emoji'] = get_smile(context.user_data)
+    coords = update.message.location
+    update.message.reply_text(
+        f"Ваши координаты {coords} {conrext.user_data['emoji']}!"
+        reply_markup=main_keyboard()
+    )
 
 def main():
     #Создаем бота и передаем ему ключ для авторизации на серверах Telegram
@@ -65,6 +75,7 @@ def main():
     dp.add_handler(CommandHandler("start", greet_user))
     dp.add_handler(CommandHandler("guess", guess_number))
     dp.add_handler(CommandHandler("ref", send_ref))
+    dp.add_handler(MessageHandler(Filters.location, user_coordinates))
     dp.add_handler(MessageHandler(Filters.regex('^(Прислать направление на МРТ)$'), send_ref))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     
